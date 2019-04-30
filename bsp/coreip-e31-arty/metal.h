@@ -1,14 +1,24 @@
 #ifndef ASSEMBLY
 
-#ifndef COREIP_E31_ARTY__METAL_H
-#define COREIP_E31_ARTY__METAL_H
+#ifndef INLINE_HDR1_H
+#define INLINE_HDR1_H
 
 #ifdef __METAL_MACHINE_MACROS
 
+#define __METAL_CLINT_NUM_PARENTS 2
+
+#ifndef __METAL_CLINT_NUM_PARENTS
+#define __METAL_CLINT_NUM_PARENTS 0
+#endif
 #define __METAL_PLIC_SUBINTERRUPTS 27
+
+#define __METAL_PLIC_NUM_PARENTS 1
 
 #ifndef __METAL_PLIC_SUBINTERRUPTS
 #define __METAL_PLIC_SUBINTERRUPTS 0
+#endif
+#ifndef __METAL_PLIC_NUM_PARENTS
+#define __METAL_PLIC_NUM_PARENTS 0
 #endif
 #ifndef __METAL_CLIC_SUBINTERRUPTS
 #define __METAL_CLIC_SUBINTERRUPTS 0
@@ -20,11 +30,15 @@
 
 #define METAL_MAX_CLINT_INTERRUPTS 2
 
+#define __METAL_CLINT_NUM_PARENTS 2
+
 #define __METAL_INTERRUPT_CONTROLLER_C000000_INTERRUPTS 1
 
 #define __METAL_PLIC_SUBINTERRUPTS 27
 
 #define METAL_MAX_PLIC_INTERRUPTS 1
+
+#define __METAL_PLIC_NUM_PARENTS 1
 
 #define __METAL_CLIC_SUBINTERRUPTS 0
 #define METAL_MAX_CLIC_INTERRUPTS 0
@@ -47,6 +61,7 @@
 
 
 #include <metal/drivers/fixed-clock.h>
+#include <metal/memory.h>
 #include <metal/drivers/riscv,clint0.h>
 #include <metal/drivers/riscv,cpu.h>
 #include <metal/drivers/riscv,plic0.h>
@@ -65,6 +80,15 @@
 asm (".weak __metal_dt_clock_0");
 struct __metal_driver_fixed_clock __metal_dt_clock_0;
 
+asm (".weak __metal_dt_mem_dtim_80000000");
+struct metal_memory __metal_dt_mem_dtim_80000000;
+
+asm (".weak __metal_dt_mem_itim_8000000");
+struct metal_memory __metal_dt_mem_itim_8000000;
+
+asm (".weak __metal_dt_mem_spi_20004000");
+struct metal_memory __metal_dt_mem_spi_20004000;
+
 /* From clint@2000000 */
 asm (".weak __metal_dt_clint_2000000");
 struct __metal_driver_riscv_clint0 __metal_dt_clint_2000000;
@@ -73,9 +97,8 @@ struct __metal_driver_riscv_clint0 __metal_dt_clint_2000000;
 asm (".weak __metal_dt_cpu_0");
 struct __metal_driver_cpu __metal_dt_cpu_0;
 
-/* From interrupt_controller */
-asm (".weak __metal_dt_interrupt_controller");
-struct __metal_driver_riscv_cpu_intc __metal_dt_interrupt_controller;
+asm (".weak __metal_dt_cpu_0_interrupt_controller");
+struct __metal_driver_riscv_cpu_intc __metal_dt_cpu_0_interrupt_controller;
 
 /* From interrupt_controller@c000000 */
 asm (".weak __metal_dt_interrupt_controller_c000000");
@@ -160,6 +183,39 @@ struct __metal_driver_fixed_clock __metal_dt_clock_0 = {
     .rate = 32500000UL,
 };
 
+struct metal_memory __metal_dt_mem_dtim_80000000 = {
+    ._base_address = 2147483648UL,
+    ._size = 65536UL,
+    ._attrs = {
+        .R = 1,
+        .W = 1,
+        .X = 1,
+        .C = 1,
+        .A = 1},
+};
+
+struct metal_memory __metal_dt_mem_itim_8000000 = {
+    ._base_address = 134217728UL,
+    ._size = 16384UL,
+    ._attrs = {
+        .R = 1,
+        .W = 1,
+        .X = 1,
+        .C = 1,
+        .A = 1},
+};
+
+struct metal_memory __metal_dt_mem_spi_20004000 = {
+    ._base_address = 1073741824UL,
+    ._size = 536870912UL,
+    ._attrs = {
+        .R = 1,
+        .W = 1,
+        .X = 1,
+        .C = 1,
+        .A = 1},
+};
+
 /* From clint@2000000 */
 struct __metal_driver_riscv_clint0 __metal_dt_clint_2000000 = {
     .vtable = &__metal_driver_vtable_riscv_clint0,
@@ -168,8 +224,9 @@ struct __metal_driver_riscv_clint0 __metal_dt_clint_2000000 = {
     .control_size = 65536UL,
     .init_done = 0,
     .num_interrupts = METAL_MAX_CLINT_INTERRUPTS,
-    .interrupt_parent = &__metal_dt_interrupt_controller.controller,
+    .interrupt_parents[0] = &__metal_dt_cpu_0_interrupt_controller.controller,
     .interrupt_lines[0] = 3,
+    .interrupt_parents[1] = &__metal_dt_cpu_0_interrupt_controller.controller,
     .interrupt_lines[1] = 7,
 };
 
@@ -178,11 +235,11 @@ struct __metal_driver_cpu __metal_dt_cpu_0 = {
     .vtable = &__metal_driver_vtable_cpu,
     .cpu.vtable = &__metal_driver_vtable_cpu.cpu_vtable,
     .timebase = 65000000UL,
-    .interrupt_controller = &__metal_dt_interrupt_controller.controller,
+    .interrupt_controller = &__metal_dt_cpu_0_interrupt_controller.controller,
 };
 
 /* From interrupt_controller */
-struct __metal_driver_riscv_cpu_intc __metal_dt_interrupt_controller = {
+struct __metal_driver_riscv_cpu_intc __metal_dt_cpu_0_interrupt_controller = {
     .vtable = &__metal_driver_vtable_riscv_cpu_intc,
     .controller.vtable = &__metal_driver_vtable_riscv_cpu_intc.controller_vtable,
     .init_done = 0,
@@ -194,9 +251,8 @@ struct __metal_driver_riscv_plic0 __metal_dt_interrupt_controller_c000000 = {
     .vtable = &__metal_driver_vtable_riscv_plic0,
     .controller.vtable = &__metal_driver_vtable_riscv_plic0.plic_vtable,
     .init_done = 0,
-/* From interrupt_controller */
-    .interrupt_parent = &__metal_dt_interrupt_controller.controller,
-    .interrupt_line = 11UL,
+    .interrupt_parents[0] = &__metal_dt_cpu_0_interrupt_controller.controller,
+    .interrupt_lines[0] = 11,
     .control_base = 201326592UL,
     .control_size = 67108864UL,
     .max_priority = 7UL,
@@ -214,8 +270,7 @@ struct __metal_driver_sifive_local_external_interrupts0 __metal_dt_local_externa
     .vtable = &__metal_driver_vtable_sifive_local_external_interrupts0,
     .irc.vtable = &__metal_driver_vtable_sifive_local_external_interrupts0.local0_vtable,
     .init_done = 0,
-/* From interrupt_controller */
-    .interrupt_parent = &__metal_dt_interrupt_controller.controller,
+    .interrupt_parent = &__metal_dt_cpu_0_interrupt_controller.controller,
     .num_interrupts = METAL_MAX_LOCAL_EXT_INTERRUPTS,
     .interrupt_lines[0] = 16,
     .interrupt_lines[1] = 17,
@@ -440,6 +495,234 @@ struct __metal_driver_sifive_uart0 __metal_dt_serial_20000000 = {
 };
 
 
+
+/* --------------------- sifive_gpio_button ------------ */
+static inline struct __metal_driver_sifive_gpio0 * __metal_driver_sifive_gpio_button_gpio(struct metal_button *button)
+{
+	if ((int)button == (int)&__metal_dt_button_0) {
+		return (struct __metal_driver_sifive_gpio0 *)&__metal_dt_gpio_20002000;
+	}
+	else if ((int)button == (int)&__metal_dt_button_1) {
+		return (struct __metal_driver_sifive_gpio0 *)&__metal_dt_gpio_20002000;
+	}
+	else if ((int)button == (int)&__metal_dt_button_2) {
+		return (struct __metal_driver_sifive_gpio0 *)&__metal_dt_gpio_20002000;
+	}
+	else if ((int)button == (int)&__metal_dt_button_3) {
+		return (struct __metal_driver_sifive_gpio0 *)&__metal_dt_gpio_20002000;
+	}
+	else {
+		return NULL;
+	}
+}
+
+static inline int __metal_driver_sifive_gpio_button_pin(struct metal_button *button)
+{
+	if ((int)button == (int)&__metal_dt_button_0) {
+		return 4;
+	}
+	else if ((int)button == (int)&__metal_dt_button_1) {
+		return 5;
+	}
+	else if ((int)button == (int)&__metal_dt_button_2) {
+		return 6;
+	}
+	else if ((int)button == (int)&__metal_dt_button_3) {
+		return 7;
+	}
+	else {
+		return 0;
+	}
+}
+
+static inline struct metal_interrupt * __metal_driver_sifive_gpio_button_interrupt_controller(struct metal_button *button)
+{
+	if ((int)button == (int)&__metal_dt_button_0) {
+		return (struct metal_interrupt *)&__metal_dt_local_external_interrupts_0;
+	}
+	else if ((int)button == (int)&__metal_dt_button_1) {
+		return (struct metal_interrupt *)&__metal_dt_local_external_interrupts_0;
+	}
+	else if ((int)button == (int)&__metal_dt_button_2) {
+		return (struct metal_interrupt *)&__metal_dt_local_external_interrupts_0;
+	}
+	else if ((int)button == (int)&__metal_dt_button_3) {
+		return (struct metal_interrupt *)&__metal_dt_local_external_interrupts_0;
+	}
+	else {
+		return NULL;
+	}
+}
+
+static inline int __metal_driver_sifive_gpio_button_interrupt_line(struct metal_button *button)
+{
+	if ((int)button == (int)&__metal_dt_button_0) {
+		return 4;
+	}
+	else if ((int)button == (int)&__metal_dt_button_1) {
+		return 5;
+	}
+	else if ((int)button == (int)&__metal_dt_button_2) {
+		return 6;
+	}
+	else if ((int)button == (int)&__metal_dt_button_3) {
+		return 7;
+	}
+	else {
+		return 0;
+	}
+}
+
+static inline char * __metal_driver_sifive_gpio_button_label(struct metal_button *button)
+{
+	if ((int)button == (int)&__metal_dt_button_0) {
+		return "BTN0";
+	}
+	else if ((int)button == (int)&__metal_dt_button_1) {
+		return "BTN1";
+	}
+	else if ((int)button == (int)&__metal_dt_button_2) {
+		return "BTN2";
+	}
+	else if ((int)button == (int)&__metal_dt_button_3) {
+		return "BTN3";
+	}
+	else {
+		return "";
+	}
+}
+
+
+
+/* --------------------- sifive_gpio_led ------------ */
+static inline struct __metal_driver_sifive_gpio0 * __metal_driver_sifive_gpio_led_gpio(struct metal_led *led)
+{
+	if ((int)led == (int)&__metal_dt_led_0red) {
+		return (struct __metal_driver_sifive_gpio0 *)&__metal_dt_gpio_20002000;
+	}
+	else if ((int)led == (int)&__metal_dt_led_0green) {
+		return (struct __metal_driver_sifive_gpio0 *)&__metal_dt_gpio_20002000;
+	}
+	else if ((int)led == (int)&__metal_dt_led_0blue) {
+		return (struct __metal_driver_sifive_gpio0 *)&__metal_dt_gpio_20002000;
+	}
+	else {
+		return NULL;
+	}
+}
+
+static inline int __metal_driver_sifive_gpio_led_pin(struct metal_led *led)
+{
+	if ((int)led == (int)&__metal_dt_led_0red) {
+		return 0;
+	}
+	else if ((int)led == (int)&__metal_dt_led_0green) {
+		return 1;
+	}
+	else if ((int)led == (int)&__metal_dt_led_0blue) {
+		return 2;
+	}
+	else {
+		return 0;
+	}
+}
+
+static inline char * __metal_driver_sifive_gpio_led_label(struct metal_led *led)
+{
+	if ((int)led == (int)&__metal_dt_led_0red) {
+		return "LD0red";
+	}
+	else if ((int)led == (int)&__metal_dt_led_0green) {
+		return "LD0green";
+	}
+	else if ((int)led == (int)&__metal_dt_led_0blue) {
+		return "LD0blue";
+	}
+	else {
+		return "";
+	}
+}
+
+
+
+/* --------------------- sifive_gpio_switch ------------ */
+static inline struct __metal_driver_sifive_gpio0 * __metal_driver_sifive_gpio_switch_gpio(struct metal_switch *flip)
+{
+		return NULL;
+}
+
+static inline int __metal_driver_sifive_gpio_switch_pin(struct metal_switch *flip)
+{
+		return 0;
+}
+
+static inline struct metal_interrupt * __metal_driver_sifive_gpio_switch_interrupt_controller(struct metal_switch *flip)
+{
+	if ((int)flip == (int)&__metal_dt_switch_0) {
+		return (struct metal_interrupt *)&__metal_dt_global_external_interrupts;
+	}
+	else if ((int)flip == (int)&__metal_dt_switch_1) {
+		return (struct metal_interrupt *)&__metal_dt_global_external_interrupts;
+	}
+	else if ((int)flip == (int)&__metal_dt_switch_2) {
+		return (struct metal_interrupt *)&__metal_dt_global_external_interrupts;
+	}
+	else if ((int)flip == (int)&__metal_dt_switch_3) {
+		return (struct metal_interrupt *)&__metal_dt_local_external_interrupts_0;
+	}
+	else {
+		return NULL;
+	}
+}
+
+static inline int __metal_driver_sifive_gpio_switch_interrupt_line(struct metal_switch *flip)
+{
+	if ((int)flip == (int)&__metal_dt_switch_0) {
+		return 0;
+	}
+	else if ((int)flip == (int)&__metal_dt_switch_1) {
+		return 1;
+	}
+	else if ((int)flip == (int)&__metal_dt_switch_2) {
+		return 2;
+	}
+	else if ((int)flip == (int)&__metal_dt_switch_3) {
+		return 3;
+	}
+	else {
+		return 0;
+	}
+}
+
+static inline char * __metal_driver_sifive_gpio_switch_label(struct metal_switch *flip)
+{
+	if ((int)flip == (int)&__metal_dt_switch_0) {
+		return "SW0";
+	}
+	else if ((int)flip == (int)&__metal_dt_switch_1) {
+		return "SW1";
+	}
+	else if ((int)flip == (int)&__metal_dt_switch_2) {
+		return "SW2";
+	}
+	else if ((int)flip == (int)&__metal_dt_switch_3) {
+		return "SW3";
+	}
+	else {
+		return "";
+	}
+}
+
+
+
+#define __METAL_DT_MAX_MEMORIES 3
+
+asm (".weak __metal_memory_table");
+struct metal_memory *__metal_memory_table[] = {
+					&__metal_dt_mem_dtim_80000000,
+					&__metal_dt_mem_itim_8000000,
+					&__metal_dt_mem_spi_20004000};
+
 /* From serial@20000000 */
 #define __METAL_DT_STDOUT_UART_HANDLE (&__metal_dt_serial_20000000.uart)
 
@@ -452,21 +735,11 @@ struct __metal_driver_sifive_uart0 __metal_dt_serial_20000000 = {
 
 #define __METAL_DT_CLINT_2000000_HANDLE (&__metal_dt_clint_2000000.controller)
 
-/* From cpu@0 */
-#define __METAL_DT_RISCV_CPU_HANDLE (&__metal_dt_cpu_0.cpu)
-
-#define __METAL_DT_CPU_0_HANDLE (&__metal_dt_cpu_0.cpu)
-
 #define __METAL_DT_MAX_HARTS 1
 
 asm (".weak __metal_cpu_table");
 struct __metal_driver_cpu *__metal_cpu_table[] = {
 					&__metal_dt_cpu_0};
-
-/* From interrupt_controller */
-#define __METAL_DT_RISCV_CPU_INTC_HANDLE (&__metal_dt_interrupt_controller.controller)
-
-#define __METAL_DT_INTERRUPT_CONTROLLER_HANDLE (&__metal_dt_interrupt_controller.controller)
 
 /* From interrupt_controller@c000000 */
 #define __METAL_DT_RISCV_PLIC0_HANDLE (&__metal_dt_interrupt_controller_c000000.controller)
@@ -531,5 +804,5 @@ struct __metal_driver_sifive_spi0 *__metal_spi_table[] = {
 
 
 #endif /* ! __METAL_MACHINE_MACROS */
-#endif /* COREIP_E31_ARTY__METAL_H*/
+#endif /* INLINE_HDR1_H*/
 #endif /* ! ASSEMBLY */
